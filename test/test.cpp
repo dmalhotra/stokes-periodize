@@ -201,9 +201,9 @@ template <class Real> void test() {
   const auto build_elem_lst_nbr = [](const sctl::Long Nelem, const sctl::Long ElemOrder, const sctl::Long FourierOrder, const sctl::Integer nbr_range){
     sctl::Vector<Real> Xc, eps, orient;
     sctl::Vector<sctl::Long> ElemOrderVec, FourierOrderVec;
-    for (sctl::Long k0 = -nbr_range; k0 <=nbr_range; k0++) {
-      for (sctl::Long k1 = -nbr_range; k1 <=nbr_range; k1++) {
-        for (sctl::Long k2 = -nbr_range; k2 <=nbr_range; k2++) {
+    for (sctl::Long k0 = -nbr_range; k0 <= nbr_range; k0++) {
+      for (sctl::Long k1 = 0; k1 <= 0; k1++) {
+        for (sctl::Long k2 = 0; k2 <= 0; k2++) {
           for (sctl::Long i = 0; i < Nelem; i++) {
             ElemOrderVec.PushBack(ElemOrder);
             FourierOrderVec.PushBack(FourierOrder);
@@ -284,7 +284,7 @@ template <class Real> void test() {
 
     Real max_err = 0;
     const auto err = U - u_ref(X0);
-    for (const auto e : err) max_err = std::max<Real>(max_err, fabs(e));
+    for (const auto e : err) max_err = std::max<Real>(max_err, sctl::fabs(e));
     std::cout<<"Max error = "<<max_err<<'\n';
 
     cube.WriteVTK("vis/U", U);
