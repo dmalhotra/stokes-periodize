@@ -1,9 +1,9 @@
 # Example Makefile for building CSBQ projects
 
 # Directories for SCTL includes and quadrature tables
-SCTL_INCLUDE_DIR ?= ./CSBQ/SCTL/include
-CSBQ_INCLUDE_DIR ?= ./CSBQ/include
-SCTL_DATA_PATH ?= ./CSBQ/data
+SCTL_INCLUDE_DIR ?= ./extern/SCTL/include
+CSBQ_INCLUDE_DIR ?= ./extern/CSBQ/include
+SCTL_DATA_PATH ?= ./extern/CSBQ/data
 
 # Compiler settings
 CXX = g++ # Requires g++-9 or newer, icpc (with gcc compatibility 7.5 or newer), or clang++ with llvm-10 or newer

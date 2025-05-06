@@ -1,3 +1,6 @@
-[submodule "CSBQ"]
-	path = CSBQ
+[submodule "extern/SCTL"]
+	path = extern/SCTL
+	url = https://github.com/dmalhotra/SCTL.git
+[submodule "extern/CSBQ"]
+	path = extern/CSBQ
 	url = https://github.com/dmalhotra/CSBQ.git
