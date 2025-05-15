@@ -1,12 +1,15 @@
 # Example Makefile for building CSBQ projects
 
+PVFMM_DIR ?= ./extern/pvfmm
+include $(PVFMM_DIR)/MakeVariables
+
 # Directories for SCTL includes and quadrature tables
-SCTL_INCLUDE_DIR ?= ./extern/SCTL/include
+SCTL_INCLUDE_DIR ?= $(PVFMM_DIR)/SCTL/include
 CSBQ_INCLUDE_DIR ?= ./extern/CSBQ/include
 SCTL_DATA_PATH ?= ./extern/CSBQ/data
 
 # Compiler settings
-CXX = g++ # Requires g++-9 or newer, icpc (with gcc compatibility 7.5 or newer), or clang++ with llvm-10 or newer
+CXX = $(CXX_PVFMM) # Requires g++-9 or newer, icpc (with gcc compatibility 7.5 or newer), or clang++ with llvm-10 or newer
 CXXFLAGS = -std=c++17 -fopenmp # Need C++11 and OpenMP
 
 # Define the path for quadrature tables and enable quadruple precision (for reading quadrature tables)
@@ -21,7 +24,7 @@ CXXFLAGS += -DSCTL_QUAD_T=__float128
 # Optional flags for debugging or release
 DEBUG ?= 0
 ifeq ($(DEBUG), 1)
-    CXXFLAGS += -O0 -fsanitize=address,leak,undefined,pointer-compare,pointer-subtract,float-divide-by-zero,float-cast-overflow \
+    CXXFLAGS += -O2 -g -fno-omit-frame-pointer -fsanitize=address,leak,undefined,pointer-compare,pointer-subtract,float-divide-by-zero,float-cast-overflow \
                 -fno-sanitize-recover=all -fstack-protector # Debug build
     CXXFLAGS += -DSCTL_MEMDEBUG # Enable SCTL memory checks
 else
@@ -35,7 +38,7 @@ CXXFLAGS += -Wall -Wfloat-conversion
 CXXFLAGS += -DSCTL_PROFILE=5 -DSCTL_VERBOSE
 
 # Enable MPI (CXX must be set to mpicxx)
-# CXXFLAGS += -DSCTL_HAVE_MPI
+CXXFLAGS += -DSCTL_HAVE_MPI
 
 # Enable BLAS and LAPACK
 # CXXFLAGS += -lblas -DSCTL_HAVE_BLAS                        # Use BLAS
@@ -55,10 +58,10 @@ CXXFLAGS += -DSCTL_PROFILE=5 -DSCTL_VERBOSE
 # CXXFLAGS += -DSCTL_HAVE_SVML
 
 # Enable PVFMM
-# PVFMM_INC_DIR = $(PVFMM_DIR)/include
-# PVFMM_LIB_DIR = $(PVFMM_DIR)/lib/.libs
-# CXXFLAGS += -DSCTL_HAVE_PVFMM -I$(PVFMM_INC_DIR)
-# LDLIBS += $(PVFMM_LIB_DIR)/libpvfmm.a
+PVFMM_INC_DIR = $(PVFMM_DIR)/include
+PVFMM_LIB_DIR = $(PVFMM_DIR)/lib/.libs
+CXXFLAGS += -DSCTL_HAVE_PVFMM -I$(PVFMM_INC_DIR)
+LDLIBS += $(PVFMM_LIB_DIR)/libpvfmm.a
 
 # Settings for stack trace
 ifeq ($(shell uname -s),Darwin)
@@ -77,14 +80,9 @@ OBJDIR = ./obj
 INCDIR = ./include
 TESTDIR = ./test
 
-# Target binaries for tests
-TARGET_BIN = \
-    $(BINDIR)/demo1-geometry \
-    $(BINDIR)/demo2-bio \
-    $(BINDIR)/demo3-bie-solve
-
 TEST_BIN = \
-    $(BINDIR)/test
+    $(BINDIR)/test \
+    $(BINDIR)/test1
 
 # Test target: build all test binaries
 test: $(TEST_BIN)
