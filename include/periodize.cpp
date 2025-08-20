@@ -172,17 +172,28 @@ template <class Real> void Periodize<Real>::EvalFarField(sctl::Vector<Real>& U_f
 
 template <class Real> const sctl::Matrix<Real>& Periodize<Real>::GetMat_UC2DE0() {
   static sctl::Matrix<Real> Mbc = [](){
+    sctl::Matrix<Real> M;
+    M.template Read<sctl::QuadReal>("data/Mbc_uc2de0_1d.mat");
+    if (M.Dim(0) || M.Dim(1)) return M;
+
     const auto [M_uc2ue0, M_uc2ue1] = PeriodizeOp<Real>::UC2UE();
     const auto [M_dc2de0, M_dc2de1] = PeriodizeOp<Real>::DC2DE();
     const auto Mbc_ue2dc = PeriodizeOp<Real>::BC_UE2DC();
-    return (M_uc2ue0 * (M_uc2ue1 * Mbc_ue2dc)) * M_dc2de0;
+    M = (M_uc2ue0 * (M_uc2ue1 * Mbc_ue2dc)) * M_dc2de0;
+    M.template Write<sctl::QuadReal>("data/Mbc_uc2de0_1d.mat");
+    return M;
   }();
   return Mbc;
 }
 
 template <class Real> const sctl::Matrix<Real>& Periodize<Real>::GetMat_UC2DE1() {
   static sctl::Matrix<Real> Mbc = [](){
+    sctl::Matrix<Real> M;
+    M.template Read<sctl::QuadReal>("data/Mbc_uc2de1_1d.mat");
+    if (M.Dim(0) || M.Dim(1)) return M;
+
     const auto [M_dc2de0, M_dc2de1] = PeriodizeOp<Real>::DC2DE();
+    M_dc2de1.template Write<sctl::QuadReal>("data/Mbc_uc2de1_1d.mat");
     return M_dc2de1;
   }();
   return Mbc;
