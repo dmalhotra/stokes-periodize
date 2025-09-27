@@ -66,6 +66,18 @@ template <class Real> class StokesBIO {
     StokesBIO(const Real SL_scal, const Real DL_scal, const sctl::Comm comm);
 
     /**
+     * Set periodicity.
+     *
+     * @param[in] periodicity periodicity type (NONE, X, XY, XYZ).
+     *
+     * @param[in] period_length length of the periodic box in each dimension.
+     * Must be positive if periodicity is not NONE.
+     *
+     * @remark Periodicity only supported in 3D and with PVFMM.
+     */
+    void SetPeriodicity(sctl::Periodicity periodicity, Real period_length = 0);
+
+    /**
      * Specify quadrature accuracy tolerance.
      *
      * @param[in] tol quadrature accuracy.

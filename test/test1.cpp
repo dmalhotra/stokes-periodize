@@ -30,7 +30,7 @@ template <class Real> void test(sctl::Comm comm) {
   const sctl::Long ElemOrder = 10;
   const sctl::Long FourierOrder = 28;
 
-  const auto build_elem_lst_nbr = [](const sctl::Long Nelem_channel, const sctl::Long ElemOrder, const sctl::Long FourierOrder, const bool add_nbrs){
+  const auto build_elem_lst = [](const sctl::Long Nelem_channel, const sctl::Long ElemOrder, const sctl::Long FourierOrder){
     sctl::Vector<Real> Xc, eps, orient;
     sctl::Vector<sctl::Long> ElemOrderVec, FourierOrderVec;
     for (sctl::Long i = 0; i < Nelem_channel; i++) {
@@ -69,33 +69,10 @@ template <class Real> void test(sctl::Comm comm) {
       }
     }
 
-    if (add_nbrs) { // duplicate geomtry to add images
-      sctl::Vector<Real> Xc_, eps_, orient_;
-      sctl::Vector<sctl::Long> ElemOrderVec_, FourierOrderVec_;
-      for (sctl::Long k0 = -1; k0 <= 1; k0++) {
-        for (const auto& x : eps) eps_.PushBack(x);
-        for (const auto& x : orient) orient_.PushBack(x);
-        for (const auto& x : ElemOrderVec) ElemOrderVec_.PushBack(x);
-        for (const auto& x : FourierOrderVec) FourierOrderVec_.PushBack(x);
-        for (sctl::Long i = 0; i < Xc.Dim()/3; i++) { // shift in x
-          Xc_.PushBack(Xc[i*3+0] + k0);
-          Xc_.PushBack(Xc[i*3+1]);
-          Xc_.PushBack(Xc[i*3+2]);
-        }
-      }
-      Xc.Swap(Xc_);
-      eps.Swap(eps_);
-      orient.Swap(orient_);
-      ElemOrderVec.Swap(ElemOrderVec_);
-      FourierOrderVec.Swap(FourierOrderVec_);
-    }
     sctl::SlenderElemList<Real> elem_lst(ElemOrderVec, FourierOrderVec, Xc, eps, orient);
     return elem_lst;
   };
-  const auto elem_lst0 = build_elem_lst_nbr(Nelem_channel, ElemOrder, FourierOrder, false); // geometry in the unit box [0,1]^3
-  const auto elem_lst_nbr = build_elem_lst_nbr(Nelem_channel, ElemOrder, FourierOrder, true); // geometry with one set of images in each direction
-  const sctl::Long Nrepeat = elem_lst_nbr.Size() / elem_lst0.Size(); // should be 3
-  //elem_lst_nbr.WriteVTK("vis/S-nbr", comm);
+  const auto elem_lst0 = build_elem_lst(Nelem_channel, ElemOrder, FourierOrder); // geometry in the unit box [0,1]^3
 
   sctl::Vector<Real> X0; // target coordinates
   elem_lst0.GetNodeCoord(&X0, nullptr, nullptr);
@@ -113,37 +90,17 @@ template <class Real> void test(sctl::Comm comm) {
     }
   }
 
-  StokesBIO LayerPotenOp0(SL_scal, DL_scal, comm); // potential from elem_lst_nbr to X0
-  LayerPotenOp0.AddElemList(elem_lst_nbr);
+  StokesBIO LayerPotenOp0(SL_scal, DL_scal, comm); // potential from elem_lst to X0
+  LayerPotenOp0.AddElemList(elem_lst0);
   LayerPotenOp0.SetTargetCoord(X0);
   LayerPotenOp0.SetAccuracy(tol);
-
-  StokesBIO LayerPotenOp_proxy(SL_scal, DL_scal, comm); // potential from elem_lst0 to proxy points
-  LayerPotenOp_proxy.AddElemList(elem_lst0);
-  LayerPotenOp_proxy.SetTargetCoord(X_proxy);
-  LayerPotenOp_proxy.SetAccuracy(tol);
+  LayerPotenOp0.SetPeriodicity(sctl::Periodicity::X, 1.0);
 
   // periodized layer potential operator
-  const auto BIO = [&DL_scal,&LayerPotenOp0,&LayerPotenOp_proxy,&X0,&Nrepeat,NormalOrient](sctl::Vector<Real>* U, const sctl::Vector<Real>& sigma) {
-    const sctl::Long N = sigma.Dim();
-
-    sctl::Vector<Real> sigma_nbr(Nrepeat*N); // repeat sigma Nrepeat times
-    for (sctl::Long k = 0; k < Nrepeat; k++) {
-      for (sctl::Long i = 0; i < N; i++) {
-        sigma_nbr[k*N+i] = sigma[i];
-      }
-    }
-
+  const auto BIO = [&DL_scal,&LayerPotenOp0,&X0,NormalOrient](sctl::Vector<Real>* U, const sctl::Vector<Real>& sigma) {
     U->SetZero();
-    LayerPotenOp0.ComputePotential(*U, sigma_nbr);
-    if (DL_scal && U->Dim() == N) (*U) -= sigma*0.5*NormalOrient * DL_scal; // for double-layer
-
-    { // Add far-field
-      sctl::Vector<Real> U_proxy, U_far;
-      LayerPotenOp_proxy.ComputePotential(U_proxy, sigma);
-      Periodize<Real>::EvalFarField(U_far, X0, U_proxy);
-      (*U) += U_far;
-    }
+    LayerPotenOp0.ComputePotential(*U, sigma);
+    if (DL_scal && U->Dim() == sigma.Dim()) (*U) -= sigma*0.5*NormalOrient * DL_scal; // for double-layer
   };
 
   // Solve for sigma to satisfy no-slip boundary conditions: BIO(sigma) + bg_flow = 0

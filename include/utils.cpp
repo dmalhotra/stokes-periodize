@@ -79,6 +79,11 @@ template <class Real> StokesBIO<Real>::StokesBIO(const Real SL_scal, const Real 
   LayerPotenDL.SetFMMKer(ker_DxU, ker_DxU, ker_DxU, ker_FSxU, ker_FSxU, ker_FSxU, ker_FxU, ker_FxU);
 };
 
+template <class Real> void StokesBIO<Real>::SetPeriodicity(sctl::Periodicity periodicity, Real period_length) {
+  LayerPotenSL.SetPeriodicity(periodicity, period_length);
+  LayerPotenDL.SetPeriodicity(periodicity, period_length);
+}
+
 template <class Real> void StokesBIO<Real>::SetAccuracy(Real tol) {
   LayerPotenSL.SetAccuracy(tol);
   LayerPotenDL.SetAccuracy(tol);
