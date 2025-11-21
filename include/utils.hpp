@@ -160,6 +160,28 @@ template <class Real> class StokesBIO {
     void ComputePotential(sctl::Vector<Real>& U, const sctl::Vector<Real>& F) const;
 
     /**
+     * Evaluate only the single-layer potential.
+     *
+     * @param[out] U the potential computed at each target point in
+     * array-of-struct order.
+     *
+     * @param[in] F the charge density at each surface discretization node in
+     * array-of-struct order.
+     */
+    void ComputeSL(sctl::Vector<Real>& U, const sctl::Vector<Real>& F) const;
+
+    /**
+     * Evaluate only the double-layer potential.
+     *
+     * @param[out] U the potential computed at each target point in
+     * array-of-struct order.
+     *
+     * @param[in] F the charge density at each surface discretization node in
+     * array-of-struct order.
+     */
+    void ComputeDL(sctl::Vector<Real>& U, const sctl::Vector<Real>& F) const;
+
+    /**
      * Scale input vector by sqrt of the area of the element.
      * TODO: replace by sqrt of surface quadrature weights (not sure if it makes a difference though)
      */
@@ -173,6 +195,9 @@ template <class Real> class StokesBIO {
 
 
   private:
+
+    // In 3-periodic, this allows adding a uniform volume potential to balance the total force density on the surface.
+    static void stokes_sl_volpot(sctl::Matrix<Real>& U, const sctl::Vector<Real>& X);
 
     const sctl::Stokes3D_FxU ker_FxU;
     const sctl::Stokes3D_DxU ker_DxU;
